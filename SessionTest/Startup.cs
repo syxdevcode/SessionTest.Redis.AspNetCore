@@ -44,15 +44,19 @@ namespace SessionTest
                 option.InstanceName = Configuration.GetConnectionString("InstanceName");
             });
 
-            // 自定义用户机密
+
+            // 1.自定义用户机密
             services.AddSingleton<IXmlRepository, CustomXmlRepository>();
 
+            
             services.AddDataProtection(configure =>
             {
                 configure.ApplicationDiscriminator = "SessionTest.Web";
-            }).PersistKeysToDistributedStore();// 存储到Redis服务器
+            });
+            // 2.存储到Redis服务器
+            //.PersistKeysToDistributedStore();
 
-                        
+
             //Session 过期时长分钟
             var sessionOutTime = Configuration.GetValue<int>("SessionTimeOut", 30);
 
