@@ -13,6 +13,7 @@ namespace SessionTest
         {
             var host = new WebHostBuilder()
                 .UseKestrel()
+                .UseUrls(new string[] { "http://*:5100"})
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseIISIntegration()
                 .UseStartup<Startup>()

@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
+using Microsoft.AspNetCore.DataProtection.Repositories;
 
 namespace SessionTest
 {
@@ -29,6 +32,32 @@ namespace SessionTest
         {
             // Add framework services.
             services.AddMvc();
+
+            //抽取key-xxxxx.xml 
+            //services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(@"D:\www"));
+
+            services.AddDistributedRedisCache(option =>
+            {
+                //redis 数据库连接字符串
+                option.Configuration = Configuration.GetConnectionString("RedisConnection");
+                //redis 实例名
+                option.InstanceName = Configuration.GetConnectionString("InstanceName");
+            });
+
+            // 自定义用户机密
+            services.AddSingleton<IXmlRepository, CustomXmlRepository>();
+
+            services.AddDataProtection(configure =>
+            {
+                configure.ApplicationDiscriminator = "SessionTest.Web";
+            }).PersistKeysToDistributedStore();// 存储到Redis服务器
+
+                        
+            //Session 过期时长分钟
+            var sessionOutTime = Configuration.GetValue<int>("SessionTimeOut", 30);
+
+            //添加Session并设置过期时长
+            services.AddSession(options => { options.IdleTimeout = TimeSpan.FromMinutes(sessionOutTime); });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -48,6 +77,8 @@ namespace SessionTest
             }
 
             app.UseStaticFiles();
+
+            app.UseSession();
 
             app.UseMvc(routes =>
             {
